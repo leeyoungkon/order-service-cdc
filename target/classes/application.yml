@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/orderdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:root1234}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+server:
+  port: 8080
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

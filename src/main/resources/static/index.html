@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order Service</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent: #0f766e;
+      --accent-strong: #115e59;
+      --error: #b91c1c;
+      --success: #166534;
+      --border: #d1d5db;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Noto Sans KR", sans-serif;
+      background: radial-gradient(circle at top right, #e6fffa, var(--bg) 45%);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 520px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+
+    p {
+      margin: 0 0 20px;
+      color: var(--muted);
+    }
+
+    form {
+      display: grid;
+      gap: 14px;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      margin-top: 6px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 15px;
+    }
+
+    button {
+      margin-top: 8px;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #ffffff;
+      background: var(--accent);
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: var(--accent-strong);
+    }
+
+    .result {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid transparent;
+      display: none;
+    }
+
+    .result.success {
+      display: block;
+      color: var(--success);
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+
+    .result.error {
+      display: block;
+      color: var(--error);
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Order 입력</h1>
+    <p>상품명과 수량을 입력하면 주문이 생성되고 DB에 저장됩니다.</p>
+
+    <form id="orderForm">
+      <label>
+        상품명
+        <input id="productName" type="text" required maxlength="100" placeholder="예: coffee" />
+      </label>
+
+      <label>
+        수량
+        <input id="quantity" type="number" required min="1" step="1" placeholder="예: 2" />
+      </label>
+
+      <button type="submit">주문 생성</button>
+    </form>
+
+    <div id="result" class="result"></div>
+  </main>
+
+  <script>
+    const form = document.getElementById("orderForm");
+    const result = document.getElementById("result");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const productName = document.getElementById("productName").value.trim();
+      const quantityValue = document.getElementById("quantity").value;
+      const quantity = Number(quantityValue);
+
+      if (!productName || !Number.isInteger(quantity) || quantity < 1) {
+        showError("상품명과 수량(1 이상 정수)을 확인해 주세요.");
+        return;
+      }
+
+      try {
+        const response = await fetch("/orders", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ productName, quantity })
+        });
+
+        if (!response.ok) {
+          const message = await response.text();
+          throw new Error(message || "주문 생성 실패");
+        }
+
+        const data = await response.json();
+        showSuccess(`주문 생성 완료\norderNo: ${data.orderNo}\nstatus: ${data.status}`);
+        form.reset();
+      } catch (error) {
+        showError(`에러: ${error.message}`);
+      }
+    });
+
+    function showSuccess(message) {
+      result.className = "result success";
+      result.textContent = message;
+    }
+
+    function showError(message) {
+      result.className = "result error";
+      result.textContent = message;
+    }
+  </script>
+</body>
+</html>
