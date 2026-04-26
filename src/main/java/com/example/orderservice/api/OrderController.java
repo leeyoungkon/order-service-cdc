@@ -1,6 +1,7 @@
 package com.example.orderservice.api;
 
 import com.example.orderservice.application.OrderService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,7 +14,7 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<OrderResponse> create(@RequestBody CreateOrderRequest request) {
+    public ResponseEntity<OrderResponse> create(@Valid @RequestBody CreateOrderRequest request) {
         return ResponseEntity.ok(orderService.createOrder(request));
     }
 

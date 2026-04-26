@@ -8,6 +8,7 @@ import com.example.orderservice.outbox.OutboxEvent;
 import com.example.orderservice.outbox.OutboxEventRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,31 +27,32 @@ public class OrderService {
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request) {
         String orderNo = UUID.randomUUID().toString();
+        String normalizedProductName = normalizeProductName(request.getProductName());
+        Integer quantity = request.getQuantity();
 
         Order order = Order.builder()
                 .orderNo(orderNo)
-                .productName(request.getProductName())
-                .quantity(request.getQuantity())
+                .productName(normalizedProductName)
+                .quantity(quantity)
                 .status("CREATED")
                 .createdAt(LocalDateTime.now())
                 .build();
 
         orderRepository.save(order);
 
-        OrderCreatedEventPayload payload = OrderCreatedEventPayload.builder()
-                .orderNo(orderNo)
-                .productName(request.getProductName())
-                .quantity(request.getQuantity())
-                .status("CREATED")
-                .build();
-
         try {
+            ObjectNode payloadNode = objectMapper.createObjectNode()
+                .put("orderNo", orderNo)
+                .put("productName", normalizedProductName)
+                .put("quantity", quantity)
+                .put("status", "CREATED");
+
             outboxEventRepository.save(
                     OutboxEvent.of(
                             "Order",
                             orderNo,
                             "OrderCreated",
-                            objectMapper.writeValueAsString(payload)
+                        objectMapper.writeValueAsString(payloadNode)
                     )
             );
         } catch (JsonProcessingException e) {
@@ -58,5 +60,15 @@ public class OrderService {
         }
 
         return new OrderResponse(orderNo, "CREATED");
+    }
+
+    private String normalizeProductName(String productName) {
+        if (productName == null) {
+            return null;
+        }
+        return productName
+                .replace("\r", " ")
+                .replace("\n", " ")
+                .trim();
     }
 }
