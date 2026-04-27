@@ -32,8 +32,15 @@ public class OutboxEvent {
     @Column(name = "payload", nullable = false, columnDefinition = "TEXT")
     private String payload;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;
+
+    @PrePersist
+    void prePersist() {
+        if (timestamp == null) {
+            timestamp = LocalDateTime.now();
+        }
+    }
 
     public static OutboxEvent of(String aggregateType, String aggregateId, String type, String payload) {
         return OutboxEvent.builder()

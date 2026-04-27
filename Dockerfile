@@ -1,8 +1,11 @@
 FROM eclipse-temurin:17-jdk-jammy AS builder
 WORKDIR /workspace
-COPY pom.xml .
-COPY src ./src
-RUN apt-get update && apt-get install -y maven && mvn -q clean package -DskipTests
+
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
+COPY src/ src/
+RUN ./mvnw clean package -DskipTests
 
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
